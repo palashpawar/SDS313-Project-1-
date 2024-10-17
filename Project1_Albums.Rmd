@@ -29,7 +29,7 @@ Citation: <https://th.bing.com/th/id/OIP.4bLbi7G6Fwa3mN8JBHbQ3AAAAA?rs=1&pid=Img
 ```{r, echo=FALSE, message=FALSE}
 
 
-albums <- read_csv("/Users/palashpawar/Desktop/SDS313/Project1_Albums.csv")
+albums <- read_csv("Project1_Albums.csv")
 ```
 
 # Outcome Variable:
@@ -58,7 +58,7 @@ Billboard Peak Position vs Weeks on Billboard
 
 # Scatter plot and correlation calculation
 ggplot(albums, aes(x = peak_billboard_position, y = weeks_on_billboard)) +
-  geom_point(alpha = 0.6, na.rm=TRUE) +
+  geom_point(alpha = 0.6, na.rm=TRUE, color="purple") +
   geom_smooth(method = "lm", se = FALSE, color = "darkgreen", na.rm=TRUE) +
   labs(title = "Peak Billboard Position vs. Weeks on Billboard", x = "Peak Billboard Position", y = "Weeks on Billbaord")
 
