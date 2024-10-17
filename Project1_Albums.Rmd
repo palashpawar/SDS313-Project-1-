@@ -1,0 +1,172 @@
+---
+title: "Analysis of Top 500 Albums Ranked by Rolling Stone in 2020"
+author: "Palash Pawar"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(kableExtra) # For enhanced table formatting
+```
+
+This report analyzes data on the top 500 ranked albums according to Rolling Stone in 2020. The dataset includes various attributes, such as the year of release, genre, album type (e.g., studio, live, compilation), Billboard chart performance (weeks on Billboard and peak position), and Spotify popularity. To view a cool visualization of these albums' rankings throughout the years, click [here](https://pudding.cool/2024/03/greatest-music/). Rolling Stone's ranking reflects both critical acclaim and cultural impact, making this [dataset](https://github.com/rfordatascience/tidytuesday/blob/master/data/2024/2024-05-07/readme.md) an insightful tool for understanding factors that contribute to an album's commercial success.
+
+![](https://pelhamexaminer.com/wp-content/uploads/2021/07/Rolling-Stone-Top-500.jpg)
+
+**Outcome Variable**: The focus of this analysis is the **Weeks on Billboard**, which indicates the duration an album remains on the charts—a key measure of its commercial success and popularity over time.
+
+**Predictor Variables**: Billboard Peak Position, Genre, Album Type
+
+Citation: <https://th.bing.com/th/id/OIP.4bLbi7G6Fwa3mN8JBHbQ3AAAAA?rs=1&pid=ImgDetMain>
+
+```{r, echo=FALSE, message=FALSE}
+
+
+albums <- read_csv("/Users/palashpawar/Desktop/SDS313/Project1_Albums.csv")
+```
+
+# Outcome Variable:
+
+The outcome variable that we are going to be using for this analysis is "Weeks on Billboard", which is the number of weeks that the album was ranked on the Billboard 200 chart. The mean amount of Weeks on Billboard is `r mean(albums$weeks_on_billboard, na.rm=TRUE)`. On the other hand, the median amount Weeks on Billboard for the top 500 albums is `r median(albums$weeks_on_billboard, na.rm=TRUE)`
+
+```{r, echo=FALSE}
+
+summary(albums$weeks_on_billboard)
+
+
+ggplot(albums, aes(x = weeks_on_billboard)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black", na.rm=TRUE) +
+  labs(title = "Distribution of Weeks on Billboard", x = "Weeks on Billboard", y = "Frequency")
+
+
+```
+
+Based on the histogram, we can see that the distribution of the Weeks on Billboard is skewed to the right.
+
+# Scatter plot and Correlation Calculation:
+
+Billboard Peak Position vs Weeks on Billboard
+
+```{r, echo=FALSE, message=FALSE}
+
+# Scatter plot and correlation calculation
+ggplot(albums, aes(x = peak_billboard_position, y = weeks_on_billboard)) +
+  geom_point(alpha = 0.6, na.rm=TRUE) +
+  geom_smooth(method = "lm", se = FALSE, color = "darkgreen", na.rm=TRUE) +
+  labs(title = "Peak Billboard Position vs. Weeks on Billboard", x = "Peak Billboard Position", y = "Weeks on Billbaord")
+
+```
+
+The scatterplot shows the relationship between the Peak Billboard position of the album and the number of weeks the album spent on the Billboard 200 chart. The **correlation coefficient of -0.67** between the two variables convey that there is a moderate negative linear relationship between Peak Billboard Position and Weeks on Billboard.
+
+```{r, echo=FALSE}
+cor(albums$peak_billboard_position, albums$weeks_on_billboard, use = "complete.obs")
+```
+
+# Relationship between Weeks on Billboard and Genre:
+
+```{r, echo=FALSE}
+# Boxplot for categorical variable Genre
+ggplot(albums, aes(x = genre, y = weeks_on_billboard)) +
+  geom_boxplot(color = "black", na.rm=TRUE) +
+  coord_flip() +
+  labs(title = "Weeks on Billboard by Genre", 
+       x = "Genre", y = "Weeks on Billboard") + 
+  theme_minimal()
+
+```
+
+The boxplot reveals significant variation in weeks on Billboard across different genres. For instance, genres like Rock and Pop generally exhibit longer chart durations, possibly due to their broad appeal and established fanbases. In contrast, genres like Jazz and Raggae show more modest performance, reflecting niche audiences.
+
+```{r, echo=FALSE}
+# Load necessary libraries
+library(dplyr)
+library(kableExtra) # For enhanced table formatting
+
+# Calculate the mean and median number of weeks on Billboard by genre
+genre_stats <- albums |>
+  group_by(Genre = genre) |>
+  summarise(
+    Mean_Weeks = mean(weeks_on_billboard, na.rm = TRUE),
+    Median_Weeks = median(weeks_on_billboard, na.rm = TRUE)
+  ) |>
+  arrange(desc(Mean_Weeks))
+
+# Display the table
+kable(genre_stats, caption = "Mean and Median Weeks on Billboard by Genre") |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+
+```
+
+This table was created to show the mean and median weeks spent of billboard for each type of genre.
+
+# Relationship between Weeks on Billboard and Album Type:
+
+```{r, echo=FALSE}
+# Boxplot for Album Type (Studio, Live, Compilation)
+ggplot(albums, aes(x = type, y = weeks_on_billboard)) +
+  coord_flip() +
+  geom_boxplot(na.rm=TRUE) +
+  labs(title = "Weeks on Billboard by Album Type", 
+       x = "Album Type", y = "Weeks on Billboard")
+
+```
+
+This boxplot highlights differences in chart performance based on album type. Studio albums tend to have the longest duration on the charts, followed by live albums and compilations. Studio albums, being primary works, often receive the most marketing and critical attention, boosting their chart longevity.
+
+```{r, echo=FALSE}
+# Load necessary libraries
+library(dplyr)
+library(kableExtra) # For creating nicely formatted tables
+
+# Calculate the five-number summary for each album type
+album_summary <- albums |>
+  filter(!is.na(weeks_on_billboard), is.finite(weeks_on_billboard)) |>
+  group_by(type) |>
+  summarise(
+    Min = min(weeks_on_billboard, na.rm = TRUE),
+    Q1 = quantile(weeks_on_billboard, 0.25, na.rm = TRUE),
+    Median = median(weeks_on_billboard, na.rm = TRUE),
+    Q3 = quantile(weeks_on_billboard, 0.75, na.rm = TRUE),
+    Max = max(weeks_on_billboard, na.rm = TRUE)
+  )
+
+# Display the table with a nice format
+kable(album_summary, caption = "Five-Number Summary of Weeks on Billboard by Album Type") |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+
+```
+
+This is the table that displays the 5 number summary of weeks spent on the Billboard chat based on the type of album (Compilation, Greatest Hits, Live, Soundtrack, Studio). tudio albums tend to have the longest duration on the charts, followed by live albums and compilations. Studio albums, being primary works, often receive the most marketing and critical attention, boosting their chart longevity.
+
+# Multivariate Analysis:
+
+```{r, echo=FALSE}
+# Multivariate plot: Weeks on Billboard vs. Spotify Popularity and Genre
+ggplot(albums, aes(x = spotify_popularity, y = weeks_on_billboard, color = genre)) +
+  geom_point(alpha = 0.6, na.rm=TRUE) +
+  labs(title = "Multivariate Analysis of Weeks on Billboard", 
+       x = "Spotify Popularity", y = "Weeks on Billboard")
+
+```
+
+The multivariate plot displays the combined effect of and genre on the number of weeks an album stays on Billboard. Notably, albums from popular genres with high Spotify popularity often achieve the longest chart runs, indicating that genre appeal and streaming success jointly influence commercial performance.
+
+# Conclusion:
+
+The analysis indicates that an album's time on the Billboard charts is significantly influenced by its popularity on Spotify position, genre, and type. These findings underscore the evolving dynamics of music consumption, where streaming plays an increasingly pivotal role. Future research could examine additional factors, such as promotional strategies, social media impact, or critical reception, to further understand the elements driving chart success. To view the current Billboard 200 (The top 200 most popular albums) you can see it [here](https://www.billboard.com/charts/billboard-200/).
+
+For the choice elements I included 2 or more in-line codes within your report, 2 working hyperlinks that further explain my data source, changed the font style, included a floating table of contents, and included a multivariate plot that displays the relationship among my outcome variable and two of the predictors.
+
+## References:
+
+-   Rolling Stone. (2020). *Top 500 Albums of All Time*. Retrieved from [Rolling Stone](https://www.rollingstone.com/music/music-lists/best-albums-of-all-time-1062063/arcade-fire-%ef%bb%bffuneral-1062733/).
+
+-   Billboard. (2020). *Billboard Chart Performance*. Retrieved from [Billboard](https://www.billboard.com).
